@@ -12,6 +12,7 @@ import argparse
 # Create an ArgumentParser object
 parser = argparse.ArgumentParser(description='Example script to parse command-line parameters.')
 parser.add_argument('-n', type=int, default=0, help='Number of times to process the file')
+parser.add_argument('-c', type=bool, default=False, help='Zero-shot COT Prompting')
 
 # Parse the command-line arguments
 args = parser.parse_args()
@@ -113,10 +114,17 @@ def test_demo(model, tokenizer):
 
     idx = 0
     for task_name, input, instruction in zip(demo_tasks, demo_inputs, demo_instructions):
-        prompt = 'Instruction: {instruction}\nInput: {input}\nAnswer: '.format(
-            input=input, 
-            instruction=instruction
-        )
+        
+        if args.c:
+            prompt = 'Instruction: {instruction}\nInput: {input}\nAnswer: Tell me about your decision-making process and the final result'.format(
+                input=input, 
+                instruction=instruction
+            )
+        else:
+            prompt = 'Instruction: {instruction}\nInput: {input}\nAnswer: '.format(
+                input=input, 
+                instruction=instruction
+            )
         
         # enable different types few shot
         if args.n == 1:
