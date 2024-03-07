@@ -7,8 +7,18 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from peft import PeftModel
 from datasets import load_dataset
 import logging
+import argparse
+
+# Create an ArgumentParser object
+parser = argparse.ArgumentParser(description='Example script to parse command-line parameters.')
+parser.add_argument('-n', type=int, default=0, help='Number of times to process the file')
+
+# Parse the command-line arguments
+args = parser.parse_args()
+
 # Suppress Warnings during inference
 logging.getLogger("transformers").setLevel(logging.ERROR)
+
 # fpb_datasets = load_dataset("financial_phrasebank", "sentences_50agree")
 # sent_data = pd.read_csv('financial_data_cleaned.csv')
 # with open('samples.txt', 'r') as f:
@@ -47,6 +57,33 @@ demo_instructions = [
 ]
 '''
 
+one_shot = """Example:
+ManTech downgraded ahead of difficult comps. // negative\n"""
+
+three_shot = """Example:
+ManTech downgraded ahead of difficult comps. // negative
+BMO Capital Markets ups to Outperform. // postive
+Arex Capital ramps up pressure on Zagg. // neutral\n"""
+
+five_shot = """Example:\n
+ManTech downgraded ahead of difficult comps. // negative
+Bank of Ireland cuts key profit target as low rates take toll. // negative
+Fed's Rosengren says he is 'optimistic' on economy. // positive
+BMO Capital Markets ups to Outperform. // postive
+Arex Capital ramps up pressure on Zagg. // neutral\n"""
+
+ten_shot = """Example:
+ManTech downgraded ahead of difficult comps. // negative
+Bank of Ireland cuts key profit target as low rates take toll. // negative
+$300,000 Pilot Jobs Drying Up in China After Boeing Grounding. // negative
+Apple forecasts 100M+ 5G iPhone sales. // postive
+Fed's Rosengren says he is 'optimistic' on economy. // positive
+BMO Capital Markets ups to Outperform. // postive
+Arex Capital ramps up pressure on Zagg. // neutral
+Brazil's central bank stepped in to prop up the currency. // neutral
+Alibaba, Manchester United sign streaming pact. // neutral
+Credit Suisse power struggle mounts - Bloomberg // neutral\n"""
+
 def load_model(base_model, peft_model, from_remote=False):
     
     model_name = parse_model_name(base_model, from_remote)
@@ -80,6 +117,17 @@ def test_demo(model, tokenizer):
             input=input, 
             instruction=instruction
         )
+        
+        # enable different types few shot
+        if args.n == 1:
+            prompt = one_shot+prompt
+        elif args.n == 3:
+            prompt = three_shot+prompt
+        elif args.n == 5:
+            prompt = five_shot+prompt
+        elif args.n == 10:
+            prompt = ten_shot+prompt
+        
         inputs = tokenizer(
             prompt, return_tensors='pt',
             padding=True, max_length=512,
@@ -92,7 +140,8 @@ def test_demo(model, tokenizer):
         )
         output = tokenizer.decode(res[0], skip_special_tokens=True)
         print(f"\n==== {task_name} ====\n")
-        print(output, social_media_dataset['validation']['label'][idx])
+        print(output)
+        # print(output, social_media_dataset['validation']['label'][idx])
         idx += 1
     
 import os
